@@ -1,8 +1,6 @@
 name: Build Image
 on:
-  push:
-    branches:
-     - '**' # all branches
+  workflow_dispatch:
 env:
   IMAGE_TAG: 39 # Fedora Version
 jobs:
