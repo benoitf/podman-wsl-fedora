@@ -2,9 +2,7 @@ name: Build Image
 on:
   push:
     branches:
-      - main
-  schedule:
-    - cron:  '2 * * * *'
+     - '**' # all branches
 env:
   IMAGE_TAG: 39 # Fedora Version
 jobs:
@@ -20,25 +18,7 @@ jobs:
         run: |
           date >> changes
           podman image pull docker.io/library/fedora:$IMAGE_TAG
-          imageDigest=`podman image inspect docker.io/library/fedora:$IMAGE_TAG --format {{.Digest}}`
-          echo $imageDigest > lastimage
-          lastImage=`curl -L "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/latest/download/lastimage"`
-          echo "Digest: $imageDigest"
-          echo "Last: $lastImage"
-          if [ "$lastImage" != "$imageDigest" ]; then
-            echo "Image needs update"
-            echo -e "\nImage update:\n $imageDigest\n" >> changes
-            echo "image_change=true" >> $GITHUB_OUTPUT
-          fi
-      - name: Reuse cached image
-        if: steps.get-image.outputs.image_change != 'true'
-        run: |
-          curl -L $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/latest/download/rootfs.tar.xz --output rootfs.tar.xz
-          unxz rootfs.tar.xz
-          podman import rootfs.tar fedora-update
-          podman create --name fedora-update fedora-update sleep 7200
       - name: Use clean image
-        if: steps.get-image.outputs.image_change == 'true'
         run: |
           podman create --name fedora-update docker.io/library/fedora:$IMAGE_TAG sleep 7200
       - name: Apply updates
